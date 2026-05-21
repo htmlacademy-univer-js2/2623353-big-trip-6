@@ -3,6 +3,7 @@ import {render, remove} from '../framework/render.js';
 import SortView from '../view/sort-view.js';
 import TripEventsListView from '../view/trip-events-list-view.js';
 import EmptyListView from '../view/empty-list-view.js';
+import LoadingView from '../view/loading-view.js';
 
 import PointPresenter from './point-presenter.js';
 import NewPointPresenter from './new-point-presenter.js';
@@ -37,12 +38,14 @@ export default class PointsPresenter {
   #tripEventsListComponent = null;
   #sortComponent = null;
   #emptyComponent = null;
+  #loadingComponent = new LoadingView();
 
   #pointPresenters = new Map();
   #newPointPresenter = null;
 
   #currentSortType = SortType.DAY;
   #isNewPointOpening = false;
+  #isLoading = true;
 
   constructor({tripEventsContainer, pointsModel, filterModel, newPointButton}) {
     this.#tripEventsContainer = tripEventsContainer;
@@ -56,6 +59,7 @@ export default class PointsPresenter {
     this.#filterModel.addObserver(this.#handleModelEvent);
 
     this.#newPointButton.addEventListener('click', this.#handleNewPointButtonClick);
+    this.#newPointButton.disabled = true;
 
     this.#renderBoard();
   }
@@ -101,6 +105,11 @@ export default class PointsPresenter {
   };
 
   #renderBoard() {
+    if (this.#isLoading) {
+      render(this.#loadingComponent, this.#tripEventsContainer);
+      return;
+    }
+
     const points = this.#getSortedPoints();
     const isCreatingNewPoint = this.#newPointPresenter !== null || this.#isNewPointOpening;
 
@@ -201,10 +210,10 @@ export default class PointsPresenter {
     });
   }
 
-  #handleViewAction = (actionType, updateType, update) => {
+  #handleViewAction = async (actionType, updateType, update) => {
     switch (actionType) {
       case UserAction.UPDATE_POINT:
-        this.#pointsModel.updatePoint(updateType, update);
+        await this.#pointsModel.updatePoint(updateType, update);
         break;
 
       case UserAction.ADD_POINT:
@@ -236,6 +245,13 @@ export default class PointsPresenter {
           this.#renderNewPoint();
           this.#isNewPointOpening = false;
         }
+        break;
+
+      case UpdateType.INIT:
+        this.#isLoading = false;
+        this.#newPointButton.disabled = false;
+        remove(this.#loadingComponent);
+        this.#renderBoard();
         break;
     }
   };
