@@ -210,21 +210,26 @@ export default class PointsPresenter {
     });
   }
 
-  #handleViewAction = async (actionType, updateType, update) => {
-    switch (actionType) {
-      case UserAction.UPDATE_POINT:
-        await this.#pointsModel.updatePoint(updateType, update);
-        break;
+  #handleViewAction = async (actionType, updateType, update, onSuccess, onError) => {
+    try {
+      switch (actionType) {
+        case UserAction.UPDATE_POINT:
+          await this.#pointsModel.updatePoint(updateType, update);
+          break;
 
-      case UserAction.ADD_POINT:
-        this.#currentSortType = SortType.DAY;
-        this.#removeNewPointForm();
-        this.#pointsModel.addPoint(updateType, update);
-        break;
+        case UserAction.ADD_POINT:
+          this.#currentSortType = SortType.DAY;
+          await this.#pointsModel.addPoint(updateType, update);
+          break;
 
-      case UserAction.DELETE_POINT:
-        this.#pointsModel.deletePoint(updateType, update);
-        break;
+        case UserAction.DELETE_POINT:
+          await this.#pointsModel.deletePoint(updateType, update);
+          break;
+      }
+
+      onSuccess?.();
+    } catch (err) {
+      onError?.();
     }
   };
 

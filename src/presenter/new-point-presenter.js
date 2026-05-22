@@ -64,16 +64,24 @@ export default class NewPointPresenter {
   }
 
   #handleFormSubmit = (point) => {
+    this.#editFormComponent.setSaving();
+
     this.#handleDataChange(
       UserAction.ADD_POINT,
       UpdateType.MINOR,
-      point
+      point,
+      null,
+      this.#handleError
     );
   };
 
   #handleCancelClick = () => {
     this.destroy();
     this.#handleDestroy?.();
+  };
+
+  #handleError = () => {
+    this.#editFormComponent.setAborting();
   };
 
   #escKeyDownHandler = (evt) => {
