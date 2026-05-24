@@ -1,6 +1,7 @@
 import {render, remove} from '../framework/render.js';
 import FilterView from '../view/filter-view.js';
 import {FilterType, UpdateType} from '../const.js';
+import {filter} from '../utils/filter.js';
 
 const FILTERS = [
   {
@@ -43,11 +44,12 @@ export default class FilterPresenter {
 
   #getFilters() {
     const currentFilterType = this.#filterModel.getFilter();
+    const points = this.#pointsModel.getPoints();
 
     return FILTERS.map((filterItem) => ({
       ...filterItem,
       isChecked: filterItem.type === currentFilterType,
-      isDisabled: false,
+      isDisabled: filter[filterItem.type](points).length === 0,
     }));
   }
 

@@ -1,5 +1,6 @@
 import PointsPresenter from './presenter/points-presenter.js';
 import FilterPresenter from './presenter/filter-presenter.js';
+import TripInfoPresenter from './presenter/trip-info-presenter.js';
 
 import PointsModel from './model/points-model.js';
 import FilterModel from './model/filter-model.js';
@@ -9,6 +10,7 @@ import TripApiService from './trip-api-service.js';
 const END_POINT = 'https://24.objects.htmlacademy.pro/big-trip';
 const AUTHORIZATION = 'Basic big-trip-elmira-2623353';
 
+const tripMainContainer = document.querySelector('.trip-main');
 const tripControlsContainer = document.querySelector('.trip-controls__filters');
 const tripEventsContainer = document.querySelector('.trip-events');
 const newPointButton = document.querySelector('.trip-main__event-add-btn');
@@ -27,6 +29,11 @@ const filterPresenter = new FilterPresenter({
   pointsModel,
 });
 
+const tripInfoPresenter = new TripInfoPresenter({
+  tripMainContainer,
+  pointsModel,
+});
+
 const pointsPresenter = new PointsPresenter({
   tripEventsContainer,
   pointsModel,
@@ -35,6 +42,7 @@ const pointsPresenter = new PointsPresenter({
 });
 
 filterPresenter.init();
+tripInfoPresenter.init();
 pointsPresenter.init();
 
 pointsModel.init();
