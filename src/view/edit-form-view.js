@@ -44,7 +44,7 @@ const createPhotosTemplate = (pictures = []) => {
   `;
 };
 
-const createOfferSelectorTemplate = (offer, isChecked, pointId) => `
+const createOfferSelectorTemplate = (offer, isChecked, pointId, isDisabled) => `
   <div class="event__offer-selector">
     <input
       class="event__offer-checkbox visually-hidden"
@@ -53,6 +53,7 @@ const createOfferSelectorTemplate = (offer, isChecked, pointId) => `
       name="event-offer-${offer.id}"
       data-offer-id="${offer.id}"
       ${isChecked ? 'checked' : ''}
+      ${isDisabled ? 'disabled' : ''}
     >
     <label class="event__offer-label" for="event-offer-${offer.id}-${pointId}">
       <span class="event__offer-title">${he.encode(String(offer.title))}</span>
@@ -62,7 +63,7 @@ const createOfferSelectorTemplate = (offer, isChecked, pointId) => `
   </div>
 `;
 
-const createTypeItemTemplate = (type, currentType, pointId) => `
+const createTypeItemTemplate = (type, currentType, pointId, isDisabled) => `
   <div class="event__type-item">
     <input
       id="event-type-${type}-${pointId}"
@@ -71,6 +72,7 @@ const createTypeItemTemplate = (type, currentType, pointId) => `
       name="event-type-${pointId}"
       value="${type}"
       ${type === currentType ? 'checked' : ''}
+      ${isDisabled ? 'disabled' : ''}
     >
     <label class="event__type-label event__type-label--${type}" for="event-type-${type}-${pointId}">
       ${capitalize(type)}
@@ -91,7 +93,8 @@ const createOffersSectionTemplate = ({availableOffers, state}) => {
     .map((offer) => createOfferSelectorTemplate(
       offer,
       state.offers.includes(offer.id),
-      state.id
+      state.id,
+      state.isDisabled
     ))
     .join('')}
       </div>
@@ -107,7 +110,7 @@ const createDestinationSectionTemplate = (destination) => {
   return `
     <section class="event__section event__section--destination">
       <h3 class="event__section-title event__section-title--destination">Destination</h3>
-      <p class="event__destination-description">${he.encode(String(destination.description))}</p>
+      <p class="event__destination-description">${he.encode(destination.description ?? '')}</p>
       ${createPhotosTemplate(destination.pictures)}
     </section>
   `;
@@ -141,6 +144,16 @@ const createEditFormTemplate = ({state, destinations, offersByType, isNewPoint})
   const startValue = formatEditDateTime(state.dateFrom);
   const endValue = formatEditDateTime(state.dateTo);
 
+  const saveButtonText = state.isSaving ? 'Saving...' : 'Save';
+
+  let resetButtonText = 'Delete';
+
+  if (isNewPoint) {
+    resetButtonText = 'Cancel';
+  } else if (state.isDeleting) {
+    resetButtonText = 'Deleting...';
+  }
+
   return `
 <li class="trip-events__item">
   <form class="event event--edit" action="#" method="post" autocomplete="off">
@@ -157,12 +170,19 @@ const createEditFormTemplate = ({state, destinations, offersByType, isNewPoint})
           >
         </label>
 
-        <input class="event__type-toggle visually-hidden" id="event-type-toggle-${state.id}" type="checkbox">
+        <input
+          class="event__type-toggle visually-hidden"
+          id="event-type-toggle-${state.id}"
+          type="checkbox"
+          ${state.isDisabled ? 'disabled' : ''}
+        >
 
         <div class="event__type-list">
           <fieldset class="event__type-group">
             <legend class="visually-hidden">Event type</legend>
-            ${POINT_TYPES.map((type) => createTypeItemTemplate(type, state.type, state.id)).join('')}
+            ${POINT_TYPES
+    .map((type) => createTypeItemTemplate(type, state.type, state.id, state.isDisabled))
+    .join('')}
           </fieldset>
         </div>
       </div>
@@ -179,6 +199,7 @@ const createEditFormTemplate = ({state, destinations, offersByType, isNewPoint})
           value="${he.encode(destinationName)}"
           list="destination-list-${state.id}"
           required
+          ${state.isDisabled ? 'disabled' : ''}
         >
         <datalist id="destination-list-${state.id}">
           ${destinations.map((item) => `<option value="${he.encode(String(item.name))}"></option>`).join('')}
@@ -194,6 +215,7 @@ const createEditFormTemplate = ({state, destinations, offersByType, isNewPoint})
           name="event-start-time"
           value="${startValue}"
           required
+          ${state.isDisabled ? 'disabled' : ''}
         >
         —
         <label class="visually-hidden" for="event-end-time-${state.id}">To</label>
@@ -204,6 +226,7 @@ const createEditFormTemplate = ({state, destinations, offersByType, isNewPoint})
           name="event-end-time"
           value="${endValue}"
           required
+          ${state.isDisabled ? 'disabled' : ''}
         >
       </div>
 
@@ -220,16 +243,34 @@ const createEditFormTemplate = ({state, destinations, offersByType, isNewPoint})
           value="${state.basePrice}"
           inputmode="numeric"
           pattern="[0-9]*"
+          ${state.isDisabled ? 'disabled' : ''}
         >
       </div>
 
-      <button class="event__save-btn btn btn--blue" type="submit">Save</button>
-      <button class="event__reset-btn" type="button">${isNewPoint ? 'Cancel' : 'Delete'}</button>
+      <button
+        class="event__save-btn btn btn--blue"
+        type="submit"
+        ${state.isDisabled ? 'disabled' : ''}
+      >
+        ${saveButtonText}
+      </button>
+
+      <button
+        class="event__reset-btn"
+        type="button"
+        ${state.isDisabled ? 'disabled' : ''}
+      >
+        ${resetButtonText}
+      </button>
 
       ${isNewPoint
     ? ''
     : `
-      <button class="event__rollup-btn" type="button">
+      <button
+        class="event__rollup-btn"
+        type="button"
+        ${state.isDisabled ? 'disabled' : ''}
+      >
         <span class="visually-hidden">Close event</span>
       </button>
     `}
@@ -291,6 +332,36 @@ export default class EditFormView extends AbstractStatefulView {
     super.removeElement();
   }
 
+  reset(point) {
+    this.updateElement(EditFormView.parsePointToState(point));
+  }
+
+  setSaving() {
+    this.updateElement({
+      isDisabled: true,
+      isSaving: true,
+    });
+  }
+
+  setDeleting() {
+    this.updateElement({
+      isDisabled: true,
+      isDeleting: true,
+    });
+  }
+
+  setAborting() {
+    const resetFormState = () => {
+      this.updateElement({
+        isDisabled: false,
+        isSaving: false,
+        isDeleting: false,
+      });
+    };
+
+    this.shake(resetFormState);
+  }
+
   _restoreHandlers() {
     this.element.querySelector('form')?.addEventListener('submit', this.#formSubmitHandler);
     this.element.querySelector('.event__reset-btn')?.addEventListener('click', this.#deleteClickHandler);
@@ -330,7 +401,7 @@ export default class EditFormView extends AbstractStatefulView {
       enableTime: true,
       dateFormat: FLATPICKR_DATE_FORMAT,
       'time_24hr': true,
-      defaultDate: this._state.dateFrom,
+      defaultDate: this._state.dateFrom || null,
       maxDate: this._state.dateTo || null,
       onChange: this.#startDateChangeHandler,
     });
@@ -339,7 +410,7 @@ export default class EditFormView extends AbstractStatefulView {
       enableTime: true,
       dateFormat: FLATPICKR_DATE_FORMAT,
       'time_24hr': true,
-      defaultDate: this._state.dateTo,
+      defaultDate: this._state.dateTo || null,
       minDate: this._state.dateFrom || null,
       onChange: this.#endDateChangeHandler,
     });
@@ -372,6 +443,10 @@ export default class EditFormView extends AbstractStatefulView {
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
 
+    if (this._state.isDisabled) {
+      return;
+    }
+
     const destinationInputValue = this.element.querySelector('.event__input--destination')?.value;
     const foundDestination = this.#destinations.find((destination) => destination.name === destinationInputValue);
 
@@ -400,11 +475,19 @@ export default class EditFormView extends AbstractStatefulView {
   #deleteClickHandler = (evt) => {
     evt.preventDefault();
 
+    if (this._state.isDisabled) {
+      return;
+    }
+
     this.#handleDeleteClick?.(EditFormView.parseStateToPoint(this._state));
   };
 
   #rollupClickHandler = (evt) => {
     evt.preventDefault();
+
+    if (this._state.isDisabled) {
+      return;
+    }
 
     this.#handleRollupClick?.();
   };
@@ -472,14 +555,23 @@ export default class EditFormView extends AbstractStatefulView {
       dateFrom: point.dateFrom ?? null,
       dateTo: point.dateTo ?? null,
       basePrice: point.basePrice ?? 0,
+      isDisabled: false,
+      isSaving: false,
+      isDeleting: false,
     };
   }
 
   static parseStateToPoint(state) {
-    return {
+    const point = {
       ...state,
       offers: [...state.offers],
       basePrice: Number(state.basePrice),
     };
+
+    delete point.isDisabled;
+    delete point.isSaving;
+    delete point.isDeleting;
+
+    return point;
   }
 }

@@ -95,6 +95,7 @@ export default class PointPresenter {
 
   resetView() {
     if (this.#mode !== Mode.DEFAULT) {
+      this.#editFormComponent.reset(this.#point);
       this.#replaceFormToPoint();
     }
   }
@@ -125,6 +126,7 @@ export default class PointPresenter {
     if (evt.key === 'Escape' || evt.key === 'Esc') {
       evt.preventDefault();
 
+      this.#editFormComponent.reset(this.#point);
       this.#replaceFormToPoint();
     }
   };
@@ -135,22 +137,31 @@ export default class PointPresenter {
   };
 
   #handleRollupClick = () => {
+    this.#editFormComponent.reset(this.#point);
     this.#replaceFormToPoint();
   };
 
   #handleFormSubmit = (updatedPoint) => {
+    this.#editFormComponent.setSaving();
+
     this.#handleDataChange(
       UserAction.UPDATE_POINT,
       UpdateType.PATCH,
-      updatedPoint
+      updatedPoint,
+      null,
+      this.#handleError
     );
   };
 
   #handleDeleteClick = () => {
+    this.#editFormComponent.setDeleting();
+
     this.#handleDataChange(
       UserAction.DELETE_POINT,
       UpdateType.MINOR,
-      this.#point
+      this.#point,
+      null,
+      this.#handleError
     );
   };
 
@@ -161,7 +172,17 @@ export default class PointPresenter {
       {
         ...this.#point,
         isFavorite: !this.#point.isFavorite,
-      }
+      },
+      null,
+      this.#handleFavoriteError
     );
+  };
+
+  #handleError = () => {
+    this.#editFormComponent.setAborting();
+  };
+
+  #handleFavoriteError = () => {
+    this.#pointComponent.shake();
   };
 }
