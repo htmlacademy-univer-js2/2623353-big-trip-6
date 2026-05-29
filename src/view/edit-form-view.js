@@ -19,6 +19,7 @@ const TYPE_TO_ICON = {
 
 const EDIT_DATE_FORMAT = 'DD/MM/YY HH:mm';
 const FLATPICKR_DATE_FORMAT = 'd/m/y H:i';
+const MIN_PRICE_VALUE = 0;
 
 const formatEditDateTime = (isoString) => isoString ? dayjs(isoString).format(EDIT_DATE_FORMAT) : '';
 
@@ -120,7 +121,7 @@ const createDestinationSectionTemplate = (destination) => {
 };
 
 const createEditFormTemplate = ({state, destinations, offersByType, isNewPoint}) => {
-  const icon = TYPE_TO_ICON[state.type] ?? 'flight';
+  const icon = TYPE_TO_ICON[state.type] ?? TYPE_TO_ICON.flight;
 
   const destination = destinations.find((item) => item.id === state.destination) ?? null;
   const destinationName = destination ? destination.name : '';
@@ -468,6 +469,11 @@ export default class EditFormView extends AbstractStatefulView {
       return;
     }
 
+    if (this._state.basePrice <= MIN_PRICE_VALUE) {
+      this.shake();
+      return;
+    }
+
     this.#handleFormSubmit?.(EditFormView.parseStateToPoint(this._state));
   };
 
@@ -524,7 +530,7 @@ export default class EditFormView extends AbstractStatefulView {
     }
 
     this._setState({
-      basePrice: onlyNumbers === '' ? 0 : Number(onlyNumbers),
+      basePrice: onlyNumbers === '' ? MIN_PRICE_VALUE : Number(onlyNumbers),
     });
   };
 
@@ -553,7 +559,7 @@ export default class EditFormView extends AbstractStatefulView {
       offers: point.offers ? [...point.offers] : [],
       dateFrom: point.dateFrom ?? null,
       dateTo: point.dateTo ?? null,
-      basePrice: point.basePrice ?? 0,
+      basePrice: point.basePrice ?? MIN_PRICE_VALUE,
       isDisabled: false,
       isSaving: false,
       isDeleting: false,
