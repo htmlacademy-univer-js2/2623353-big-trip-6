@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 
 const DATE_FORMAT = 'D MMM';
+const MAX_DESTINATION_NAMES_COUNT = 3;
 
 const getSortedPointsByDay = (points) => [...points].sort(
   (pointA, pointB) => new Date(pointA.dateFrom) - new Date(pointB.dateFrom)
@@ -27,7 +28,7 @@ const getRouteTitle = (points, destinations) => {
     return '';
   }
 
-  if (destinationNames.length <= 3) {
+  if (destinationNames.length <= MAX_DESTINATION_NAMES_COUNT) {
     return destinationNames.join(' — ');
   }
 

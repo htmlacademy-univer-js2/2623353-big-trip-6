@@ -8,7 +8,7 @@ import FilterModel from './model/filter-model.js';
 import TripApiService from './trip-api-service.js';
 
 const END_POINT = 'https://24.objects.htmlacademy.pro/big-trip';
-const AUTHORIZATION = 'Basic big-trip-elmira-2623353';
+const AUTHORIZATION = `Basic ${crypto.randomUUID()}`;
 
 const tripMainContainer = document.querySelector('.trip-main');
 const tripControlsContainer = document.querySelector('.trip-controls__filters');

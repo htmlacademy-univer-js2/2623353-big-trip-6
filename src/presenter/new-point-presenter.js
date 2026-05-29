@@ -21,6 +21,8 @@ export default class NewPointPresenter {
 
   #editFormComponent = null;
 
+  #isRequestPending = false;
+
   #handleDataChange = null;
   #handleDestroy = null;
 
@@ -64,6 +66,11 @@ export default class NewPointPresenter {
   }
 
   #handleFormSubmit = (point) => {
+    if (this.#isRequestPending) {
+      return;
+    }
+
+    this.#isRequestPending = true;
     this.#editFormComponent.setSaving();
 
     this.#handleDataChange(
@@ -76,11 +83,21 @@ export default class NewPointPresenter {
   };
 
   #handleCancelClick = () => {
+    if (this.#isRequestPending) {
+      return;
+    }
+
     this.destroy();
     this.#handleDestroy?.();
   };
 
   #handleError = () => {
+    this.#isRequestPending = false;
+
+    if (!this.#editFormComponent) {
+      return;
+    }
+
     this.#editFormComponent.setAborting();
   };
 

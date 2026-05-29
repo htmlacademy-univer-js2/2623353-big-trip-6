@@ -5,6 +5,7 @@ export default class PointsModel extends Observable {
   #points = [];
   #destinations = [];
   #offersByType = [];
+  #isLoadingError = false;
 
   #tripApiService = null;
 
@@ -29,10 +30,12 @@ export default class PointsModel extends Observable {
       this.#points = points;
       this.#destinations = destinations;
       this.#offersByType = offersByType;
+      this.#isLoadingError = false;
     } catch (err) {
       this.#points = [];
       this.#destinations = [];
       this.#offersByType = [];
+      this.#isLoadingError = true;
     }
 
     this._notify(UpdateType.INIT);
@@ -40,6 +43,10 @@ export default class PointsModel extends Observable {
 
   getPoints() {
     return this.#points;
+  }
+
+  isLoadingError() {
+    return this.#isLoadingError;
   }
 
   setPoints(updateType, points) {
