@@ -46,6 +46,7 @@ export default class PointsPresenter {
   #currentSortType = SortType.DAY;
   #isNewPointOpening = false;
   #isLoading = true;
+  #isUiBlocked = false;
 
   constructor({tripEventsContainer, pointsModel, filterModel, newPointButton}) {
     this.#tripEventsContainer = tripEventsContainer;
@@ -93,7 +94,7 @@ export default class PointsPresenter {
   }
 
   #handleSortTypeChange = (sortType) => {
-    if (this.#currentSortType === sortType) {
+    if (this.#isUiBlocked || this.#currentSortType === sortType) {
       return;
     }
 
@@ -107,6 +108,15 @@ export default class PointsPresenter {
   #renderBoard() {
     if (this.#isLoading) {
       render(this.#loadingComponent, this.#tripEventsContainer);
+      return;
+    }
+
+    if (this.#pointsModel.isLoadingError()) {
+      this.#emptyComponent = new EmptyListView({
+        message: 'Failed to load latest route information',
+      });
+
+      render(this.#emptyComponent, this.#tripEventsContainer);
       return;
     }
 
@@ -211,6 +221,12 @@ export default class PointsPresenter {
   }
 
   #handleViewAction = async (actionType, updateType, update, onSuccess, onError) => {
+    if (this.#isUiBlocked) {
+      return;
+    }
+
+    this.#isUiBlocked = true;
+
     try {
       switch (actionType) {
         case UserAction.UPDATE_POINT:
@@ -227,8 +243,10 @@ export default class PointsPresenter {
           break;
       }
 
+      this.#isUiBlocked = false;
       onSuccess?.();
     } catch (err) {
+      this.#isUiBlocked = false;
       onError?.();
     }
   };
@@ -237,11 +255,13 @@ export default class PointsPresenter {
     switch (updateType) {
       case UpdateType.PATCH:
       case UpdateType.MINOR:
+        this.#isUiBlocked = false;
         this.#clearBoard();
         this.#renderBoard();
         break;
 
       case UpdateType.MAJOR:
+        this.#isUiBlocked = false;
         this.#currentSortType = SortType.DAY;
         this.#clearBoard();
         this.#renderBoard();
@@ -254,7 +274,8 @@ export default class PointsPresenter {
 
       case UpdateType.INIT:
         this.#isLoading = false;
-        this.#newPointButton.disabled = false;
+        this.#isUiBlocked = false;
+        this.#newPointButton.disabled = this.#pointsModel.isLoadingError();
         remove(this.#loadingComponent);
         this.#renderBoard();
         break;
@@ -262,11 +283,21 @@ export default class PointsPresenter {
   };
 
   #handleModeChange = () => {
+    if (this.#isUiBlocked) {
+      return false;
+    }
+
     this.#pointPresenters.forEach((presenter) => presenter.resetView());
     this.#removeNewPointForm();
+
+    return true;
   };
 
   #handleNewPointButtonClick = () => {
+    if (this.#isUiBlocked) {
+      return;
+    }
+
     this.#newPointButton.disabled = true;
     this.#isNewPointOpening = true;
 

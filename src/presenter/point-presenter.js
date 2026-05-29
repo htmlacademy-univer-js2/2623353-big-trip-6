@@ -132,7 +132,12 @@ export default class PointPresenter {
   };
 
   #handleEditClick = () => {
-    this.#handleModeChange();
+    const isModeChangeAllowed = this.#handleModeChange();
+
+    if (isModeChangeAllowed === false) {
+      return;
+    }
+
     this.#replacePointToForm();
   };
 
@@ -179,6 +184,10 @@ export default class PointPresenter {
   };
 
   #handleError = () => {
+    if (!this.#editFormComponent) {
+      return;
+    }
+
     this.#editFormComponent.setAborting();
   };
 
