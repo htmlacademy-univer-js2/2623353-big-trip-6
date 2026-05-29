@@ -103,15 +103,18 @@ const createOffersSectionTemplate = ({availableOffers, state}) => {
 };
 
 const createDestinationSectionTemplate = (destination) => {
-  if (!destination) {
+  const description = destination?.description ?? '';
+  const pictures = destination?.pictures ?? [];
+
+  if (!destination || (!description && pictures.length === 0)) {
     return '';
   }
 
   return `
     <section class="event__section event__section--destination">
       <h3 class="event__section-title event__section-title--destination">Destination</h3>
-      <p class="event__destination-description">${he.encode(destination.description ?? '')}</p>
-      ${createPhotosTemplate(destination.pictures)}
+      ${description ? `<p class="event__destination-description">${he.encode(description)}</p>` : ''}
+      ${createPhotosTemplate(pictures)}
     </section>
   `;
 };
@@ -258,7 +261,6 @@ const createEditFormTemplate = ({state, destinations, offersByType, isNewPoint})
       <button
         class="event__reset-btn"
         type="button"
-        ${state.isDisabled ? 'disabled' : ''}
       >
         ${resetButtonText}
       </button>
@@ -269,7 +271,6 @@ const createEditFormTemplate = ({state, destinations, offersByType, isNewPoint})
       <button
         class="event__rollup-btn"
         type="button"
-        ${state.isDisabled ? 'disabled' : ''}
       >
         <span class="visually-hidden">Close event</span>
       </button>
@@ -351,15 +352,13 @@ export default class EditFormView extends AbstractStatefulView {
   }
 
   setAborting() {
-    const resetFormState = () => {
-      this.updateElement({
-        isDisabled: false,
-        isSaving: false,
-        isDeleting: false,
-      });
-    };
+    this.updateElement({
+      isDisabled: false,
+      isSaving: false,
+      isDeleting: false,
+    });
 
-    this.shake(resetFormState);
+    this.shake();
   }
 
   _restoreHandlers() {
